@@ -1,0 +1,38 @@
+<!doctype html><html lang="en"><head><!-- hexo injector head_begin start --><meta name="author" content="LHY"></meta><!-- hexo injector head_begin end --><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="/favicon.ico"><script type="module" crossorigin src="/static/js/120aa8f8.js"></script><link rel="stylesheet" href="/static/css/a14e1a22.css"><style>
+  /* 1. CSS 暴力覆盖 */
+  .app-banner, .app-banner-screen {
+    /* 这里的 !important 是关键，必须加，否则盖不住 style="..." */
+    background: url('/images/day.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+    
+    /* 确保不透明 */
+    opacity: 1 !important;
+  }
+  
+  /* 夜间模式 */
+  [data-theme="dark"] .app-banner, 
+  [data-theme="dark"] .app-banner-screen {
+    background: url('/images/night.jpg') !important;
+    background-size: cover !important;
+  }
+</style>
+
+<script>
+  // 2. JS 暴力补刀 (防止 CSS 加载慢了)
+  // 每0.5秒巡逻一次，发现背景不对立刻修正
+  setInterval(function() {
+    var banner = document.querySelector('.app-banner');
+    if (banner) {
+      // 强制修改 DOM 上的 style 属性
+      banner.style.setProperty('background', "url('/images/day.jpg') center center / cover no-repeat fixed", 'important');
+      
+      // 如果是夜间模式（检测 html 标签上的属性）
+      if (document.documentElement.getAttribute('data-theme') === 'dark') {
+          banner.style.setProperty('background', "url('/images/night.jpg') center center / cover no-repeat fixed", 'important');
+      }
+    }
+  }, 500);
+</script><!-- hexo injector head_end start --><script rel="prefetch" async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script rel="preload" src="https://unpkg.com/blueimp-md5@^2.19.0/js/md5.min.js"></script><script rel="preload" src="https://unpkg.com/lodash@^4.17.21/lodash.min.js"></script><link rel="stylesheet" href="https://fonts.loli.net/css?family=Rubik" /><script rel="preload" src="https://unpkg.com/gitalk@^1.8.0/dist/gitalk.min.js"></script><link rel="stylesheet" href="https://unpkg.com/gitalk@^1.8.0/dist/gitalk.css"/><link rel="stylesheet" href="/css/custom.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.1"></head><body id="body-container"><noscript><strong>We're sorry but this app doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id="app"></div></body></html>
