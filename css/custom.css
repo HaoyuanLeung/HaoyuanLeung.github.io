@@ -1,0 +1,43 @@
+/* =========================================
+   Butterfly 主题专属自定义样式
+   (替换原 Aurora 样式)
+========================================= */
+
+/* 1. 【日间模式】顶部大图配置 (统一在此管理) */
+/* Butterfly 的大图区域 ID 叫 #page-header */
+#page-header {
+    /* 强制把它的背景换成你的日间图片 */
+    background-image: url('/images/day.png') !important;
+
+    /* 调整图片样式 (Butterfly 默认已处理 cover 和 center，这里保留配置以防万一) */
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+
+    /* 💡注意：Butterfly 默认不建议开启 background-attachment: fixed，可能会导致部分浏览器滚动卡顿，建议先注释掉看看效果。 */
+    /* background-attachment: fixed !important; */
+
+    /* 确保它是完全不透明的 */
+    opacity: 1 !important;
+}
+
+/* 2. 【夜间模式】顶部大图适配 */
+[data-theme="dark"] #page-header {
+    background-image: url('/images/night.png') !important;
+}
+
+/* 3. 【日间模式】把内容卡片弄透明，露出背景图 (Glassmorphism 效果) */
+/* 狙击：首页内容区 (#page) 和 侧边栏卡片 (#aside-content .card-widget) */
+#page, #aside-content .card-widget {
+    background-color: rgba(255, 255, 255, 0.8) !important; /* 白天：白色半透明 */
+    backdrop-filter: blur(8px) !important; /* 毛玻璃效果 */
+}
+
+/* 4. 【夜间模式】内容卡片透明度适配 */
+[data-theme="dark"] #page, [data-theme="dark"] #aside-content .card-widget {
+    background-color: rgba(30, 30, 30, 0.6) !important; /* 夜间：深色半透明 */
+}
+
+#site-info {
+    display: none !important;
+}

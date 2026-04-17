@@ -1,38 +1,188 @@
-<!doctype html><html lang="en"><head><!-- hexo injector head_begin start --><meta name="author" content="LHY"></meta><!-- hexo injector head_begin end --><meta charset="utf-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="icon" href="/favicon.ico"><script type="module" crossorigin src="/static/js/120aa8f8.js"></script><link rel="stylesheet" href="/static/css/a14e1a22.css"><style>
-  /* 1. CSS 暴力覆盖 */
-  .app-banner, .app-banner-screen {
-    /* 这里的 !important 是关键，必须加，否则盖不住 style="..." */
-    background: url('/images/day.jpg') !important;
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
-    background-attachment: fixed !important;
-    
-    /* 确保不透明 */
-    opacity: 1 !important;
-  }
-  
-  /* 夜间模式 */
-  [data-theme="dark"] .app-banner, 
-  [data-theme="dark"] .app-banner-screen {
-    background: url('/images/night.jpg') !important;
-    background-size: cover !important;
-  }
-</style>
-
-<script>
-  // 2. JS 暴力补刀 (防止 CSS 加载慢了)
-  // 每0.5秒巡逻一次，发现背景不对立刻修正
-  setInterval(function() {
-    var banner = document.querySelector('.app-banner');
-    if (banner) {
-      // 强制修改 DOM 上的 style 属性
-      banner.style.setProperty('background', "url('/images/day.jpg') center center / cover no-repeat fixed", 'important');
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>二叉搜索树以及平衡树 | LHY's Blog</title><meta name="author" content="LHY"><meta name="copyright" content="LHY"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="二叉搜索树记录了基本结构，包含插入函数和删除函数。注意，这两个函数的第一个参数一般使用根节点，也即从根节点出发搜索空位&#x2F;指定的值，搜索到就插入&#x2F;删除。 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616">
+<meta property="og:type" content="article">
+<meta property="og:title" content="二叉搜索树以及平衡树">
+<meta property="og:url" content="https://haoyuanleung.github.io/post/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E4%BB%A5%E5%8F%8A%E5%B9%B3%E8%A1%A1%E6%A0%91/index.html">
+<meta property="og:site_name" content="LHY&#39;s Blog">
+<meta property="og:description" content="二叉搜索树记录了基本结构，包含插入函数和删除函数。注意，这两个函数的第一个参数一般使用根节点，也即从根节点出发搜索空位&#x2F;指定的值，搜索到就插入&#x2F;删除。 123456789101112131415161718192021222324252627282930313233343536373839404142434445464748495051525354555657585960616">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://haoyuanleung.github.io/img/butterfly-icon.png">
+<meta property="article:published_time" content="2026-02-01T16:00:00.000Z">
+<meta property="article:modified_time" content="2026-02-13T23:01:13.689Z">
+<meta property="article:author" content="LHY">
+<meta property="article:tag" content="平衡树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://haoyuanleung.github.io/img/butterfly-icon.png"><script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "BlogPosting",
+  "headline": "二叉搜索树以及平衡树",
+  "url": "https://haoyuanleung.github.io/post/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E4%BB%A5%E5%8F%8A%E5%B9%B3%E8%A1%A1%E6%A0%91/",
+  "image": "https://haoyuanleung.github.io/img/butterfly-icon.png",
+  "datePublished": "2026-02-01T16:00:00.000Z",
+  "dateModified": "2026-02-13T23:01:13.689Z",
+  "author": [
+    {
+      "@type": "Person",
+      "name": "LHY",
+      "url": "https://haoyuanleung.github.io"
+    }
+  ]
+}</script><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="https://haoyuanleung.github.io/post/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E4%BB%A5%E5%8F%8A%E5%B9%B3%E8%A1%A1%E6%A0%91/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css?v=5.5.4"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.1.0/css/all.min.css"><script>
+    (() => {
       
-      // 如果是夜间模式（检测 html 标签上的属性）
-      if (document.documentElement.getAttribute('data-theme') === 'dark') {
-          banner.style.setProperty('background', "url('/images/night.jpg') center center / cover no-repeat fixed", 'important');
+    const saveToLocal = {
+      set: (key, value, ttl) => {
+        if (!ttl) return
+        const expiry = Date.now() + ttl * 86400000
+        localStorage.setItem(key, JSON.stringify({ value, expiry }))
+      },
+      get: key => {
+        const itemStr = localStorage.getItem(key)
+        if (!itemStr) return undefined
+        const { value, expiry } = JSON.parse(itemStr)
+        if (Date.now() > expiry) {
+          localStorage.removeItem(key)
+          return undefined
+        }
+        return value
       }
     }
-  }, 500);
-</script><!-- hexo injector head_end start --><script rel="prefetch" async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><script rel="preload" src="https://unpkg.com/blueimp-md5@^2.19.0/js/md5.min.js"></script><script rel="preload" src="https://unpkg.com/lodash@^4.17.21/lodash.min.js"></script><link rel="stylesheet" href="https://fonts.loli.net/css?family=Rubik" /><script rel="preload" src="https://unpkg.com/gitalk@^1.8.0/dist/gitalk.min.js"></script><link rel="stylesheet" href="https://unpkg.com/gitalk@^1.8.0/dist/gitalk.css"/><link rel="stylesheet" href="/css/custom.css"><!-- hexo injector head_end end --><meta name="generator" content="Hexo 8.1.1"></head><body id="body-container"><noscript><strong>We're sorry but this app doesn't work properly without JavaScript enabled. Please enable it to continue.</strong></noscript><div id="app"></div></body></html>
+
+    window.btf = {
+      saveToLocal,
+      getScript: (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        Object.entries(attr).forEach(([key, val]) => script.setAttribute(key, val))
+        script.onload = script.onreadystatechange = () => {
+          if (!script.readyState || /loaded|complete/.test(script.readyState)) resolve()
+        }
+        script.onerror = reject
+        document.head.appendChild(script)
+      }),
+      getCSS: (url, id) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onload = link.onreadystatechange = () => {
+          if (!link.readyState || /loaded|complete/.test(link.readyState)) resolve()
+        }
+        link.onerror = reject
+        document.head.appendChild(link)
+      }),
+      addGlobalFn: (key, fn, name = false, parent = window) => {
+        if (!false && key.startsWith('pjax')) return
+        const globalFn = parent.globalFn || {}
+        globalFn[key] = globalFn[key] || {}
+        globalFn[key][name || Object.keys(globalFn[key]).length] = fn
+        parent.globalFn = globalFn
+      }
+    }
+  
+      
+      const activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      const activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+
+      btf.activateDarkMode = activateDarkMode
+      btf.activateLightMode = activateLightMode
+
+      const theme = saveToLocal.get('theme')
+    
+          theme === 'dark' ? activateDarkMode() : theme === 'light' ? activateLightMode() : null
+        
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        document.documentElement.classList.toggle('hide-aside', asideStatus === 'hide')
+      }
+    
+      
+    const detectApple = () => {
+      if (/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)) {
+        document.documentElement.classList.add('apple')
+      }
+    }
+    detectApple()
+  
+    })()
+  </script><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"簡"},
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false,"highlightFullpage":false,"highlightMacStyle":false},
+  copy: {
+    success: '复制成功',
+    error: '复制失败',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'null',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid@4.13.0/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyloadPlugin: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '二叉搜索树以及平衡树',
+  isHighlightShrink: false,
+  isToc: true,
+  pageType: 'post'
+}</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 8.1.1"></head><body><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a class="nav-site-title" href="/"><span class="site-name">LHY's Blog</span></a><a class="nav-page-title" href="/"><span class="site-name">二叉搜索树以及平衡树</span><span class="site-name"><i class="fa-solid fa-circle-arrow-left"></i><span>  返回首页</span></span></a></span><div id="menus"></div></nav><div id="post-info"><h1 class="post-title">二叉搜索树以及平衡树</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2026-02-01T16:00:00.000Z" title="发表于 2026-02-02 00:00:00">2026-02-02</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2026-02-13T23:01:13.689Z" title="更新于 2026-02-14 07:01:13">2026-02-14</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%AE%97%E6%B3%95/">算法</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E7%AE%97%E6%B3%95/%E6%A8%A1%E6%9D%BF/">模板</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title=""><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">浏览量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="container post-content" id="article-container"><h1 id="二叉搜索树"><a href="#二叉搜索树" class="headerlink" title="二叉搜索树"></a>二叉搜索树</h1><p>记录了基本结构，包含插入函数和删除函数。<br>注意，这两个函数的第一个参数一般使用根节点，也即从根节点出发搜索空位&#x2F;指定的值，搜索到就插入&#x2F;删除。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;iostream&gt;</span></span></span><br><span class="line"><span class="keyword">using</span> <span class="keyword">namespace</span> std;</span><br><span class="line"></span><br><span class="line"><span class="type">const</span> <span class="type">int</span> N = <span class="number">100010</span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">struct</span> <span class="title class_">Node</span> &#123;</span><br><span class="line">    <span class="type">int</span> val;</span><br><span class="line">    <span class="type">int</span> l, r; <span class="comment">// l和r存储的是数组下标，不是指针</span></span><br><span class="line">&#125; tr[N];</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> idx = <span class="number">0</span>; <span class="comment">// 这里的 idx 相当于内存分配指针</span></span><br><span class="line"><span class="type">int</span> root = <span class="number">0</span>; <span class="comment">// 0 表示空地址 (NULL)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 申请新节点 (类似于 new Node(v))</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">new_node</span><span class="params">(<span class="type">int</span> v)</span> </span>&#123;</span><br><span class="line">    idx++;</span><br><span class="line">    tr[idx].val = v;</span><br><span class="line">    tr[idx].l = <span class="number">0</span>;</span><br><span class="line">    tr[idx].r = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">return</span> idx;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 插入操作</span></span><br><span class="line"><span class="comment">// u 是引用，代表当前节点在父节点中的“钩子”</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">insert</span><span class="params">(<span class="type">int</span> &amp;u, <span class="type">int</span> v)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (u == <span class="number">0</span>) &#123; <span class="comment">// 如果当前位置是空的，直接把新节点挂在这里</span></span><br><span class="line">        u = <span class="built_in">new_node</span>(v);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (v &lt; tr[u].val) <span class="built_in">insert</span>(tr[u].l, v);</span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (v &gt; tr[u].val) <span class="built_in">insert</span>(tr[u].r, v);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 辅助函数：找子树中最小值的节点下标</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">find_min</span><span class="params">(<span class="type">int</span> u)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">while</span> (tr[u].l != <span class="number">0</span>) u = tr[u].l;</span><br><span class="line">    <span class="keyword">return</span> u;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 类似也有find_max，只要把while里面的tr[u].l改成tr[u].r即可</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 删除操作</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">remove</span><span class="params">(<span class="type">int</span> &amp;u, <span class="type">int</span> v)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (u == <span class="number">0</span>) <span class="keyword">return</span>; <span class="comment">// 没找到</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (v &lt; tr[u].val) &#123;</span><br><span class="line">        <span class="built_in">remove</span>(tr[u].l, v);</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (v &gt; tr[u].val) &#123;</span><br><span class="line">        <span class="built_in">remove</span>(tr[u].r, v);</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 找到了，开始删除</span></span><br><span class="line">        <span class="comment">// 情况 A &amp; B: 单子节点或无子节点</span></span><br><span class="line">        <span class="keyword">if</span> (tr[u].l == <span class="number">0</span>) &#123;</span><br><span class="line">            u = tr[u].r; <span class="comment">// 用右孩子顶替当前位置 (如果是0也就是变成空)</span></span><br><span class="line">        &#125; </span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">if</span> (tr[u].r == <span class="number">0</span>) &#123;</span><br><span class="line">            u = tr[u].l; <span class="comment">// 用左孩子顶替</span></span><br><span class="line">        &#125; </span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 情况 C: 左右都有</span></span><br><span class="line">            <span class="comment">// 找右子树的最小值（后继）</span></span><br><span class="line">            <span class="type">int</span> successor = <span class="built_in">find_min</span>(tr[u].r);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 用后继的值覆盖当前节点</span></span><br><span class="line">            tr[u].val = tr[successor].val;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 递归删除那个后继节点</span></span><br><span class="line">            <span class="built_in">remove</span>(tr[u].r, tr[successor].val);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h2 id="一些细节"><a href="#一些细节" class="headerlink" title="一些细节"></a>一些细节</h2><p>使用引用传递参数的原因：将指针传到下一层。这里是一个不使用引用传递参数的版本，借以理解。</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="type">int</span> <span class="title">insert</span><span class="params">(<span class="type">int</span> u, <span class="type">int</span> v)</span> </span>&#123; </span><br><span class="line">    <span class="keyword">if</span> (u == <span class="number">0</span>) <span class="keyword">return</span> <span class="built_in">new_node</span>(v); </span><br><span class="line">    <span class="keyword">if</span> (v &lt; tr[u].val) tr[u].l = <span class="built_in">insert</span>(tr[u].l, v);</span><br><span class="line">    <span class="keyword">else</span> tr[u].r = <span class="built_in">insert</span>(tr[u].r, v); </span><br><span class="line">    <span class="keyword">return</span> u; <span class="comment">// 返回当前节点，保持链条不断</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对于删除函数的第三种情况，也即要删除的节点左右均有节点，可以取右子树的最小值或者是左子树的最大值。由二叉搜索树的性质知它们一定是叶子。<br>然后，使用它们的值代替该节点的值，节点索引不变，同时删除原节点（因为是叶子，递归的时候会进入if的第二个分支）。</p>
+<h1 id="平衡树"><a href="#平衡树" class="headerlink" title="平衡树"></a>平衡树</h1><p>对于平衡树，最重要的是给节点加入了一个成员h，衡量其高度。这个高度是max(左子树高度，右子树高度)</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">struct</span> <span class="title class_">Node</span> &#123;</span><br><span class="line">    <span class="type">int</span> val;</span><br><span class="line">    <span class="type">int</span> l, r;</span><br><span class="line">    <span class="type">int</span> h; <span class="comment">// 存高度</span></span><br><span class="line">&#125; tr[N];</span><br><span class="line"></span><br><span class="line"><span class="type">int</span> idx = <span class="number">0</span>;</span><br><span class="line"><span class="type">int</span> root = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 更新节点高度</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">pushup</span><span class="params">(<span class="type">int</span> u)</span> </span>&#123;</span><br><span class="line">    tr[u].h = <span class="built_in">max</span>(tr[tr[u].l].h, tr[tr[u].r].h) + <span class="number">1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 获取平衡因子 (Balance Factor)</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">get_balance</span><span class="params">(<span class="type">int</span> u)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> tr[tr[u].l].h - tr[tr[u].r].h;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 创建新节点</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">new_node</span><span class="params">(<span class="type">int</span> v)</span> </span>&#123;</span><br><span class="line">    idx++;</span><br><span class="line">    tr[idx].val = v;</span><br><span class="line">    tr[idx].l = <span class="number">0</span>;</span><br><span class="line">    tr[idx].r = <span class="number">0</span>;</span><br><span class="line">    tr[idx].h = <span class="number">1</span>; <span class="comment">// 新节点高度为1</span></span><br><span class="line">    <span class="keyword">return</span> idx;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 核心：右旋</span></span><br><span class="line"><span class="comment">// 注意：这里引用传参 u，直接修改父节点的指向</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">rotate_right</span><span class="params">(<span class="type">int</span> &amp;u)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> p = tr[u].l;  <span class="comment">// p 是 u 的左孩子</span></span><br><span class="line">    tr[u].l = tr[p].r; <span class="comment">// u 的左边接管 p 的右边</span></span><br><span class="line">    tr[p].r = u;      <span class="comment">// p 的右边变成 u</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 必须先更新子节点 u 的高度，再更新父节点 p 的高度</span></span><br><span class="line">    <span class="built_in">pushup</span>(u);</span><br><span class="line">    <span class="built_in">pushup</span>(p);</span><br><span class="line">     </span><br><span class="line">    u = p; <span class="comment">// 将当前位置的根更新为 p</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 核心：左旋</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">rotate_left</span><span class="params">(<span class="type">int</span> &amp;u)</span> </span>&#123;</span><br><span class="line">    <span class="type">int</span> p = tr[u].r;  <span class="comment">// p 是 u 的右孩子</span></span><br><span class="line">    tr[u].r = tr[p].l;</span><br><span class="line">    tr[p].l = u;</span><br><span class="line">    </span><br><span class="line">    <span class="built_in">pushup</span>(u);</span><br><span class="line">    <span class="built_in">pushup</span>(p);</span><br><span class="line">    </span><br><span class="line">    u = p;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 插入操作 (带自动平衡)</span></span><br><span class="line"><span class="function"><span class="type">void</span> <span class="title">insert</span><span class="params">(<span class="type">int</span> &amp;u, <span class="type">int</span> v)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (u == <span class="number">0</span>) &#123;</span><br><span class="line">        u = <span class="built_in">new_node</span>(v);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (v &lt; tr[u].val) &#123;</span><br><span class="line">        <span class="built_in">insert</span>(tr[u].l, v);</span><br><span class="line">        <span class="comment">// 回溯时检查左边是否太高 (平衡因子 == 2)</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">get_balance</span>(u) == <span class="number">2</span>) &#123;</span><br><span class="line">            <span class="comment">// 判断是 LL 还是 LR</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">get_balance</span>(tr[u].l) == <span class="number">1</span>) &#123;</span><br><span class="line">                <span class="comment">// LL型: 直接右旋</span></span><br><span class="line">                <span class="built_in">rotate_right</span>(u);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// LR型: 先左旋左孩子，再右旋自己</span></span><br><span class="line">                <span class="built_in">rotate_left</span>(tr[u].l);</span><br><span class="line">                <span class="built_in">rotate_right</span>(u);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; </span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (v &gt; tr[u].val) &#123;</span><br><span class="line">        <span class="built_in">insert</span>(tr[u].r, v);</span><br><span class="line">        <span class="comment">// 回溯时检查右边是否太高 (平衡因子 == -2)</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">get_balance</span>(u) == <span class="number">-2</span>) &#123;</span><br><span class="line">            <span class="comment">// 判断是 RR 还是 RL</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="built_in">get_balance</span>(tr[u].r) == <span class="number">-1</span>) &#123;</span><br><span class="line">                <span class="comment">// RR型: 直接左旋</span></span><br><span class="line">                <span class="built_in">rotate_left</span>(u);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// RL型: 先右旋右孩子，再左旋自己</span></span><br><span class="line">                <span class="built_in">rotate_right</span>(tr[u].r);</span><br><span class="line">                <span class="built_in">rotate_left</span>(u);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 每次递归回来都要更新当前节点高度</span></span><br><span class="line">    <span class="built_in">pushup</span>(u);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="一些细节-1"><a href="#一些细节-1" class="headerlink" title="一些细节"></a>一些细节</h2><ol>
+<li><p>使用Pushup函数，在插入和删除节点时候维护节点的高度状态</p>
+</li>
+<li><p>右旋：当左子树太高（重）时，我们需要向右旋转。左旋类似</p>
+</li>
+<li><p>四种失衡情况：<br> LL 型（左左）：在左孩子的左侧插入<br> 手段：对当前节点进行一次右旋。</p>
+<p> RR 型（右右）：在右孩子的右侧插入<br> 手段：对当前节点进行一次左旋。</p>
+<p> LR 型（左右）：在左孩子的右侧插入。<br> 手段：先对左孩子左旋（变成 LL 型），再对当前节点右旋。</p>
+<p> RL 型（右左）：在右孩子的左侧插入。<br> 手段：先对右孩子右旋（变成 RR 型），再对当前节点左旋。</p>
+</li>
+<li><p>右旋：<br> 对于当前的节点u，设其左节点为p，那么，将p旋转到u的位置上，同时，p的左子树不变，右子树变成u，然后，将自己原来的右子树挂到u的左边（由于旋转的缘故，这个位置空了）。</p>
+</li>
+<li><p>引用传参的原因：左旋右旋函数通常是在其他函数里被调用的，如果不引用传参会更加麻烦一点。比如说，</p>
+</li>
+</ol>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 必须有返回值</span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">rotate_right</span><span class="params">(<span class="type">int</span> u)</span> </span>&#123;</span><br><span class="line">   <span class="comment">// ... 旋转逻辑 ...</span></span><br><span class="line">   <span class="keyword">return</span> p;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 调用的时候必须手动接住！</span></span><br><span class="line">tr[Father].l = <span class="built_in">rotate_right</span>(tr[Father].l);</span><br></pre></td></tr></table></figure>
+<p>当u节点的上级节点Father发现自己的左子节点u失衡了需要旋转的时候，就要传入参数。如果不用引用传递参数的话就多写一句赋值语句。</p>
+</article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="https://haoyuanleung.github.io">LHY</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="https://haoyuanleung.github.io/post/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E4%BB%A5%E5%8F%8A%E5%B9%B3%E8%A1%A1%E6%A0%91/">https://haoyuanleung.github.io/post/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E4%BB%A5%E5%8F%8A%E5%B9%B3%E8%A1%A1%E6%A0%91/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来源 <a href="https://haoyuanleung.github.io" target="_blank">LHY's Blog</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/%E5%B9%B3%E8%A1%A1%E6%A0%91/">平衡树</a></div><div class="post-share"><div class="social-share" data-image="/img/butterfly-icon.png" data-sites="facebook,x,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc@1.1.6/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><a class="pagination-related" href="/post/%E5%BF%AB%E9%80%9F%E5%B9%82%E4%B8%8E%E7%9F%A9%E9%98%B5/" title="快速幂与矩阵"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info"><div class="info-1"><div class="info-item-1">上一篇</div><div class="info-item-2">快速幂与矩阵</div></div><div class="info-2"><div class="info-item-1">快速幂计算base^power mod p时， 1234567891011121314long long fastPower(long long base, long long power, long long mod) &#123;    long long result = 1;    while (power &gt; 0) &#123;        // 如果当前二进制位是 1        if (power % 2 == 1) &#123;            result = (result * base) % mod;        &#125;        // 底数翻倍（平方）        base = (base * base) % mod;        // 指数右移一位        power /= 2;    &#125;    return result;&#125;  矩阵快速幂12345678910111213141516171819202122232425262728293031323334353637383940414243444...</div></div></div></a><a class="pagination-related" href="/post/%E4%BB%8E%E7%AE%97%E6%B3%95%E5%88%B0%E6%95%B0%E8%AE%BA%EF%BC%9A%E7%AC%AC22%E6%AC%A1CCFCSP%20T4%E7%9A%84%E4%B8%80%E4%BA%9B%E6%83%B3%E6%B3%95%E5%92%8C%E5%90%AF%E5%8F%91/" title="优化 从算法到数论：第22次CCFCSP T4的一些想法和启发"><div class="cover" style="background: var(--default-bg-color)"></div><div class="info text-right"><div class="info-1"><div class="info-item-1">下一篇</div><div class="info-item-2">优化 从算法到数论：第22次CCFCSP T4的一些想法和启发</div></div><div class="info-2"><div class="info-item-1">原题链接链接 暴力解法很简单，只需计算这里，f(i)表示从到的方案数，表示到的等差数列方案数目中，公差不是任何一个的因子的d的数量，其中j&lt;k&lt;i 12345678910111213141516171819202122232425262728293031323334353637383940414243444546474849505152535455#include&lt;bits/stdc++.h&gt;using namespace std;const int N1 = 1e3+10,N2 = 1e5+10,MOD = 1e9+7;int n,a[N1],s[N1][N1];long long res[N1];int Ato(int l,int r){//a[l]到[r]，可能的原子方案数    int ans=0;    int t = a[r]-a[l];double tt = sqrt(t);    for(int i=1;i&lt;=tt;i++){        if(!(t%i)){//是因子的时候            bool jud1=true,j...</div></div></div></a></nav></div><div class="aside-content" id="aside-content"><div class="card-widget card-info text-center"><div class="avatar-img"><img src="/img/butterfly-icon.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info-name">LHY</div><div class="author-info-description"></div><div class="site-data"><a href="/archives/"><div class="headline">文章</div><div class="length-num">19</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">14</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">3</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/HaoyuanLeung/"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>个性签名</span></div><div class="announcement_content">天空中的宝石应该交由天空去寻找</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91"><span class="toc-number">1.</span> <span class="toc-text">二叉搜索树</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E7%BB%86%E8%8A%82"><span class="toc-number">1.1.</span> <span class="toc-text">一些细节</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#%E5%B9%B3%E8%A1%A1%E6%A0%91"><span class="toc-number">2.</span> <span class="toc-text">平衡树</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#%E4%B8%80%E4%BA%9B%E7%BB%86%E8%8A%82-1"><span class="toc-number">2.1.</span> <span class="toc-text">一些细节</span></a></li></ol></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/post/%E7%AC%AC32%E6%AC%A1CCFCSP%20T3%E6%A0%91%E4%B8%8A%E6%90%9C%E7%B4%A2/" title="树上搜索">树上搜索</a><time datetime="2026-03-23T16:00:00.000Z" title="发表于 2026-03-24 00:00:00">2026-03-24</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/post/%E6%A2%AF%E5%BA%A6%E6%B1%82%E8%A7%A3%EF%BC%9A%E6%A0%91%E3%80%81%E5%AD%97%E7%AC%A6%E4%B8%B2/" title="梯度求解：树与字符串">梯度求解：树与字符串</a><time datetime="2026-03-09T16:00:00.000Z" title="发表于 2026-03-10 00:00:00">2026-03-10</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/post/21st%20T3/" title="CCFCSP 21st T3大模拟">CCFCSP 21st T3大模拟</a><time datetime="2026-02-13T16:00:00.000Z" title="发表于 2026-02-14 00:00:00">2026-02-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/post/%E4%BA%8C%E5%8F%89%E6%90%9C%E7%B4%A2%E6%A0%91%E4%BB%A5%E5%8F%8A%E5%B9%B3%E8%A1%A1%E6%A0%91/" title="二叉搜索树以及平衡树">二叉搜索树以及平衡树</a><time datetime="2026-02-01T16:00:00.000Z" title="发表于 2026-02-02 00:00:00">2026-02-02</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/post/%E5%BF%AB%E9%80%9F%E5%B9%82%E4%B8%8E%E7%9F%A9%E9%98%B5/" title="快速幂与矩阵">快速幂与矩阵</a><time datetime="2026-02-01T16:00:00.000Z" title="发表于 2026-02-02 00:00:00">2026-02-02</time></div></div></div></div></div></div></main><footer id="footer"><div class="footer-other"><div class="footer-copyright"><span class="copyright">&copy;&nbsp;2025 - 2026 By LHY</span><span class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo 8.1.1</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly 5.5.4</a></span></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="日间和夜间模式切换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js?v=5.5.4"></script><script src="/js/main.js?v=5.5.4"></script><script src="/js/tw_cn.js?v=5.5.4"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script></div></body></html>
